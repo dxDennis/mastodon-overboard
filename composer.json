@@ -1,0 +1,26 @@
+{
+  "name": "dennis/mastodon_api",
+  "description": "Just a workaround",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dennis Decker",
+      "email": "info@decodo.de"
+    }
+  ],
+  "require": {
+    "php": ">=7.4.00",
+    "guzzlehttp/guzzle": "^7.5",
+    "twbs/bootstrap": "^5.2",
+    "phpfastcache/phpfastcache": "^8.1",
+    "components/jquery": "^3.6",
+    "fortawesome/font-awesome": "^5.10",
+    "vlucas/phpdotenv": "^5.5",
+    "monolog/monolog": "^2.8"
+  },
+  "autoload": {
+    "psr-4": {
+      "DecodoMastodonService\\": ""
+    }
+  }
+}
