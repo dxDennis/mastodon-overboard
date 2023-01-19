@@ -5,7 +5,6 @@
  *
  */
 
-use DecodoMastodonService\Component\Main\MainHelper;
 use DecodoMastodonService\Controller\Router;
 use Dotenv\Dotenv;
 
