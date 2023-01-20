@@ -63,22 +63,22 @@ class MainHelper extends HelperComponent
             '</a>' .
             '</div>';
 
-        $extendedHtml .= (!empty(CURRENT_USER) ?
-            '<div style="position:absolute; top:15px;right:15px;" ><small>' .
-            '<a target="_blank" ' .
-            'href="https://www.decodo.de/mastodon/?action=stats&instance=' . $instance['name'] . '">' .
-            '<i class="fas fa-project-diagram"></i>' .
+        $extendedHtml .=
+            '<div class="server-card-tools"><small>' .
+            '<a title="more" ' .
+            'href="/mastodon/getInstanceStats/?instance=' . $instance['name'] . '">' .
+            '<i class="fab fa-hubspot"></i>' .
             '</a> &middot; ' .
-            '<a target="_blank" ' .
+            '<a title="raw instance" target="_blank" ' .
             'href="https://' . $instance['name'] . '/api/v2/instance">' .
-            '<i class="fas fa-server"></i>' .
+            '<i class="fas fa-info-circle"></i>' .
             '</a> &middot; ' .
-            '<a target="_blank" ' .
+            '<a  title="raw trends" target="_blank" ' .
             'href="https://' . $instance['name'] . '/api/v1/trends/statuses">' .
-            '<i class="fas fa-server"></i>' .
+            '<i class="fas fa-file-alt"></i>' .
             '</a>' .
-            '</small></div>'
-            : '');
+            '</small></div>'           ;
+
         if ($instance['name'] !== 'mastodon.social') {
             $extendedHtml .= '<hr><div class="text-muted"><small><small><strong>' . $instance['name'] . '</strong> ' .
                 'ist Teil des dezentralen sozialen Netzwerks, das von ' .
@@ -151,8 +151,13 @@ class MainHelper extends HelperComponent
      */
     public function parseInstanceLinks(bool $reset = false)
     {
+        global $routingData;
         $htmlContent = '';
         $instanceStats = $this->getStatsCollection($reset);
+
+        $htmlContent .= '<li><a '.($routingData['viewport'] === 'main' ?'class="text-danger"':'') .' href="/mastodon/">Trends</a></li>';
+        $htmlContent .= '<li><a '.($routingData['viewport'] === 'timelines' ?'class="text-danger"':'') .' href="/mastodon/timelines" >Timelines</a></li>';
+        $htmlContent .= '<li><hr></li>';
 
         foreach ($instanceStats as $instanceName => $instance) {
             $count = (isset($instance['data']) ? count($instance['data']) : 0);
@@ -165,11 +170,46 @@ class MainHelper extends HelperComponent
                 '<small data-instance-count="' . $instanceName . '" class="text-muted">' . $count . ' Posts</small></li>';
         }
 
-        $htmlContent .= '<li><a href="/mastodon/imprint" >Impressum</a></li>';
+        $htmlContent .= '<li><hr></li><li><a href="/mastodon/imprint" >Impressum</a></li>';
 
         return '<ul class="list-unstyled">' . $htmlContent . '</ul>';
     }
 
+
+    public function getOrderedTimelineCollection(bool $reset = false){
+        if (empty($this->orderedTrendsCollection) || count($this->orderedTrendsCollection) <= 0 || $reset !== false) {
+            $this->orderedTrendsCollection = [];
+
+
+            foreach ($this->getTimelineCollection($reset) as $instanceName => $instance) {
+
+                $count = (isset($instance['data']) && is_array($instance['data']) ? count($instance['data']) : 0);
+
+                if ($count > 0) {
+                    foreach ($instance['data'] as $article) {
+
+                        $points = 0;
+                        $points += ((int)$article['replies_count'] * 20);
+                        $points += ((int)$article['reblogs_count'] * 10);
+                        $points += ((int)$article['favourites_count'] * 2);
+//                        $points += ($instanceName === 'mastodon.social' ? 10 : 0);
+
+                        $article['instance_name'] = $instanceName;
+                        $article['instance_uri'] = $instance['uri'];
+                        $article['unix_time'] = strtotime($article['created_at']);
+                        $article['since'] = self::timeAgo($article['created_at']);
+                        $article['time'] = date('Y-m-d H:i:s', $article['unix_time']);
+                        $article['expiration_time'] = $instance['expiration_time'];
+
+                        $this->orderedTrendsCollection[$article['unix_time']][$points][] = $article;
+                    }
+                }
+            }
+            krsort($this->orderedTrendsCollection);
+        }
+
+        return $this->orderedTrendsCollection;
+    }
 
     /**
      * @param bool $reset
@@ -210,6 +250,14 @@ class MainHelper extends HelperComponent
         return $this->orderedTrendsCollection;
     }
 
+
+    public function getTimelineCollection(bool $reset = false){
+        if (empty($this->trendCollection) || count($this->trendCollection) <= 0 || $reset !== false) {
+            $this->trendCollection = $this->instanceController->getInstanceTimeLineCollection($reset);
+        }
+        return $this->trendCollection;
+    }
+
     /**
      * @param bool $reset
      * @return array
@@ -234,6 +282,33 @@ class MainHelper extends HelperComponent
         return $this->statsCollection;
     }
 
+    public function parseTimelinePosts()
+    {
+//        https://connectit.social/api/v1/timelines/public?local=true&only_media=false
+
+        $htmlContent = '';
+        $doubleBucket = [];
+
+        foreach ($this->getOrderedTimelineCollection() as $time_code => $balanced_posts) {
+
+            krsort($balanced_posts);
+            foreach ($balanced_posts as $balancePoints => $articles) {
+                foreach ($articles as $article) {
+
+                    //avoid doubles
+                    if (in_array($article['uri'], $doubleBucket)) {
+                        continue;
+                    }
+                    $doubleBucket[] = $article['uri'];
+
+                    $htmlContent .= '<div data-card-instance="' . $article['instance_name'] . '" class="trend-cards" ' .
+                        'title="Id:' . $article['id'] . ' läuft ab in ' . $article['expiration_time'] . '">' . $this->parseCard($article, $balancePoints) . '</div>';
+                }
+            }
+        }
+
+        return $htmlContent;
+    }
     /**
      * @param bool $reset
      * @return string
@@ -369,10 +444,10 @@ class MainHelper extends HelperComponent
             '<i class="fas fa-retweet fa-fw"></i> ' . $article['reblogs_count'] . '</div> ' .
             '<div class="replies_count mx-2 ' . ($article['replies_count'] <= 0 ? 'text-muted' : '') . '">' .
             '<i class="fas fa-reply fa-fw"></i> ' . $article['replies_count'] . '</div> ' .
-            '<a href="' . $article['url'] . '" ' .
-            'target="_blank" >View <i class="fa fa-external-link-alt"></i></a>' .
-            '</div>' .
 
+            '</div>' .
+            '<a title="Original Post aufrufen" href="' . $article['url'] . '" ' .
+            'target="_blank" >View <i class="fa fa-external-link-alt"></i></a>' .
             (!empty(CURRENT_USER) ?
                 '<div class="btn-group">' .
                 '<a href="' . $article['url'] . '" ' .
@@ -432,7 +507,7 @@ class MainHelper extends HelperComponent
     }
 
 
-    public function parseServerHeader(array $instance, $extended = false)
+    public function parseServerHeader(array $instance)
     {
         $htmlContent = '';
 
@@ -449,24 +524,8 @@ class MainHelper extends HelperComponent
             $userActiveMonth = (int)($userActiveMonth / 1000) . 'K';
         }
 
-        $extendedHtml = '';
-        if ($extended) {
-            $extendedHtml .= '';
-        }
-
-
         $contactImage = '<a href="' . $instance['data']['contact']['account']['url'] . '" target="_blank" class="text-muted">' .
             '<img src="' . $instance['data']['contact']['account']['avatar'] . '" alt="avatar ' . $instance['data']['contact']['account']['avatar'] . '" style="width: 192px;"></a>';
-
-
-//        $extendedHtml .= (!empty(CURRENT_USER) ?
-//            '<div style="position:absolute; top:15px;right:15px;" ><small>' .
-//            '<a target="_blank" ' .
-//            'href="https://www.decodo.de/mastodon/?action=stats&instance=' . $instance['name'] . '">' .
-//            '<i class="fas fa-project-diagram"></i>' .
-//            '</a>' .
-//            '</small></div>'
-//            : '');
 
         $registerIcon = '<i class="fas fa-check text-success" title="Registrierung möglich. ' . trim($instance['data']['registrations']['message']) . '"></i> ' .
             'Registrierung möglich. ' . trim($instance['data']['registrations']['message']);
@@ -524,5 +583,6 @@ class MainHelper extends HelperComponent
 
         return $htmlContent;
     }
+
 
 }

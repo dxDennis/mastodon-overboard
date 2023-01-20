@@ -40,7 +40,7 @@ if (isset($instances[$requestInstance])) {
 };
 
 $document = new Document();
-$document->title = 'What`s Mastogoing - ' . $requestInstance;
+$document->title = 'Instance details - ' . $requestInstance;
 $document->start();
 ?>
     <style>

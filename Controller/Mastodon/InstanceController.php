@@ -100,6 +100,42 @@ class InstanceController
         return json_decode($cacheCallResponse, 1);
     }
 
+    public function getInstanceTimeLineCollection($reset = false){
+        foreach (self::$instances as $instanceName => $instance) {
+            self::$instances[$instanceName] = array_merge(self::$instances[$instanceName],
+                $this->getCachedSingleInstanceTimeLine($instance, $reset));
+        }
+        return self::$instances;
+    }
+
+    public function getCachedSingleInstanceTimeLine($instance, bool $reset = false, string $expirationTime = '15 minutes'){
+        $cacheModel = new CacheModel();
+        $cacheKey = __METHOD__ . '_' . $instance['name'];
+        $cacheItem = $cacheModel->get($cacheKey);
+
+        LogController::getLogger()->info('IP:' . $_SERVER['REMOTE_ADDR'] .
+            ' isHit: '.$cacheItem->isHit().
+            ' reset: '.$reset.
+            ' expirationTime: '.$expirationTime.
+            ' CacheKey:' . $cacheKey, [__FILE__ . ' ' . __LINE__]);
+
+        if (!$cacheItem->isHit() || $reset !== false) {
+            $results = $this->getSingleInstanceTimeline($instance);
+            if (!$results === false) {
+                $cacheItem = $cacheModel->write($results, CacheModel::toDate($expirationTime));
+            }
+        } else {
+            LogController::getLogger()->info('IP:' . $_SERVER['REMOTE_ADDR'] .
+                ' From Cache: '.$cacheItem->getExpirationDate()->format('Y-m-d H:i:s'), [__FILE__ . ' ' . __LINE__]);
+        }
+
+        $results['expires_at'] = $cacheItem->getExpirationDate()->format('Y-m-d H:i:s');
+        $results['expiration_time'] = $expirationTime;
+        $results['cache_key'] = $cacheKey;
+        $results['data'] = $cacheItem->get();
+        $results['count'] = (isset($results['data']) && is_array($results['data']) ?  count($results['data']):0);
+        return $results;
+    }
     /****************************************************** NEW TRENDS ****************************************/
 
     /**
@@ -152,6 +188,14 @@ class InstanceController
         return $results;
     }
 
+    public function getSingleInstanceTimeline($instance){
+        $apiController = new ApiController();
+        $cacheCallResponse = $apiController->call($instance['uri'] . '/api/v1/timelines/public?local=true&only_media=false');
+        if (!$cacheCallResponse) {
+            return false;
+        }
+        return json_decode($cacheCallResponse, 1);
+    }
     public function getSingleInstanceTrends($instance)
     {
         $apiController = new ApiController();
