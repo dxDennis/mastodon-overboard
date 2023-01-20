@@ -19,7 +19,7 @@ $document->start();
                                                          target="_blank"><span>Über</span></a> · <a
                                     href="https://joinmastodon.org/apps" target="_blank"><span>App herunterladen</span></a>
                             · <a
-                                    href="https://github.com/mastodon/mastodon" rel="noopener noreferrer"
+                                    href="https://github.com/dxDennis/mastodon-overboard" rel="noopener noreferrer"
                                     target="_blank"><span>Quellcode anzeigen</span></a> · <a href="/mastodon/imprint" rel="noopener noreferrer"
                             ><span>Impressum</span></a> v4.0.2</p>
                     </div>

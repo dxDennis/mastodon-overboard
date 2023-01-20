@@ -58,7 +58,7 @@ class MainHelper extends HelperComponent
 
         $contactInfo = '<div class="contact-info">' .
             '<a href="' . $instance['data']['contact']['account']['url'] . '" target="_blank" class="text-muted">' .
-            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" style="width:16px;"> ' .
+            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" alt="avatar '.$instance['data']['contact']['account']['display_name'].'" style="width:16px;"> ' .
             $instance['data']['contact']['account']['display_name'] .
             '</a>' .
             '</div>';
@@ -94,7 +94,7 @@ class MainHelper extends HelperComponent
             '<label class="form-check-label" for="flexSwitchCheckDefault">Aktiv</label>' .
             '</div>';
 
-        $htmlContent .= '<div class="card shadow-sm mb-3 server-card" id="server-instance-'.$instance['name'].'" >' .
+        $htmlContent .= '<div class="card shadow-sm mb-3 server-card" id="server-instance-' . $instance['name'] . '" >' .
             '<a target="_blank"  href="https://' . $instance['name'] . '">' .
             $image .
             '</a>' .
@@ -180,6 +180,7 @@ class MainHelper extends HelperComponent
         if (empty($this->orderedTrendsCollection) || count($this->orderedTrendsCollection) <= 0 || $reset !== false) {
             $this->orderedTrendsCollection = [];
 
+
             foreach ($this->getTrendCollection($reset) as $instanceName => $instance) {
 
                 $count = (isset($instance['data']) && is_array($instance['data']) ? count($instance['data']) : 0);
@@ -240,14 +241,22 @@ class MainHelper extends HelperComponent
     public function parsePosts(bool $reset = false): string
     {
         $htmlContent = '';
+        $doubleBucket = [];
+
         foreach ($this->getOrderedTrendsCollection() as $time_code => $balanced_posts) {
 
             krsort($balanced_posts);
             foreach ($balanced_posts as $balancePoints => $articles) {
                 foreach ($articles as $article) {
 
+                    //avoid doubles
+                    if (in_array($article['uri'], $doubleBucket)) {
+                        continue;
+                    }
+                    $doubleBucket[] = $article['uri'];
+
                     $htmlContent .= '<div data-card-instance="' . $article['instance_name'] . '" class="trend-cards" ' .
-                        'title="läuft ab in ' . $article['expiration_time'] . '">' . $this->parseCard($article, $balancePoints) . '</div>';
+                        'title="Id:' . $article['id'] . ' läuft ab in ' . $article['expiration_time'] . '">' . $this->parseCard($article, $balancePoints) . '</div>';
                 }
             }
         }
@@ -384,7 +393,7 @@ class MainHelper extends HelperComponent
             '<div class="text-muted text-end  position-relative">' .
             '<a class="text-muted" title="' . $article['instance_name'] . '" ' .
             'href="https://' . $article['instance_name'] . '" target="_blank" ' .
-            'alt="' . $article['instance_name'] . '" class="stretched-link">' .
+            'title="' . $article['instance_name'] . '" class="stretched-link">' .
             '<small>' . $article['instance_name'] . '</small></a>' .
             '<br/>' .
             '<small title="balance-points: ' . $balancePoints . '">' .
@@ -411,12 +420,12 @@ class MainHelper extends HelperComponent
     {
         return '<div class="d-flex flex-grow-1 position-relative">' .
             '<div class="flex-shrink-0">' .
-            '<img src="' . $account['avatar'] . '" style="width:46px">' .
+            '<img src="' . $account['avatar'] . '" alt="avatar" style="width:46px">' .
             '</div>' .
             '<div class=" ms-3">' . $account['username'] . '<br/>' .
             '<small class="text-muted">' . $account['acct'] . ' ' .
             '<a href="' . $account['url'] . '" target="_blank" ' .
-            'alt="' . $account['username'] . '" class="stretched-link">&nbsp;</a>' .
+            'title="' . $account['username'] . '" class="stretched-link">&nbsp;</a>' .
             '</small>' .
             '</div>' .
             '</div>';
@@ -447,7 +456,7 @@ class MainHelper extends HelperComponent
 
 
         $contactImage = '<a href="' . $instance['data']['contact']['account']['url'] . '" target="_blank" class="text-muted">' .
-            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" style="width: 192px;"></a>';
+            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" alt="avatar ' . $instance['data']['contact']['account']['avatar'] . '" style="width: 192px;"></a>';
 
 
 //        $extendedHtml .= (!empty(CURRENT_USER) ?
