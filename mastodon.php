@@ -16,18 +16,37 @@ $dotenv->safeLoad();
 define('CURRENT_USER', ($_COOKIE['isAdmin'] ?? ''));
 
 $cookiePath = "/";
-setcookie("cookieName", "", time() - 3600, $cookiePath);
-unset ($_COOKIE['cookieName']);
+
 
 $router = new Router();
 $routingData = $router::route('/mastodon');
-if($routingData['method'] === 'GET'){
-    if(file_exists(__DIR__.'/Viewport/'.$routingData['viewport'].'.php')){
-        include_once __DIR__.'/Viewport/'.$routingData['viewport'].'.php';
+if ($routingData['method'] === 'GET') {
+
+    if ($routingData['viewport'] === 'login') {
+        $username = $_GET['user'] ?? '';
+        $password = $_GET['password'] ?? '';
+        if ($username === $_ENV['ADMIN'] && $password === $_ENV['PASSWORD']) {
+            $cookieExpire = time() + (60 * 60 * 24);
+            setcookie("isAdmin", $_GET['user'], $cookieExpire, $cookiePath);
+            header('location: ' . HOME_URL . '#logged-in');
+            exit;
+        }
+        header('location: ' . HOME_URL . '#login-failed');
+        exit;
+
+    } elseif ($routingData['viewport'] === 'logout') {
+        setcookie("isAdmin", "", time() - 3600, $cookiePath);
+        unset ($_COOKIE['isAdmin']);
+        header('location: ' . HOME_URL . '#logged-out');
+        exit;
+    }
+
+    if (file_exists(__DIR__ . '/Viewport/' . $routingData['viewport'] . '.php')) {
+        include_once __DIR__ . '/Viewport/' . $routingData['viewport'] . '.php';
         exit;
     }
 }
-include_once __DIR__.'/Viewport/error.php';
+include_once __DIR__ . '/Viewport/error.php';
 exit;
 
 

@@ -2,8 +2,6 @@
 
 namespace DecodoMastodonService\Component\Main;
 
-use DateTime;
-use DateTimeImmutable;
 use DecodoMastodonService\Component\HelperComponent;
 use DecodoMastodonService\Controller\Mastodon\InstanceController;
 
@@ -23,6 +21,12 @@ class MainHelper extends HelperComponent
     {
         $this->instanceController = new InstanceController();
     }
+
+    public function getStatusContext(string $statusId,$instance)
+    {
+        return $this->instanceController->getCachedStatusContext($statusId,$instance);
+    }
+
 
     /**
      * @param array $instance
@@ -58,7 +62,7 @@ class MainHelper extends HelperComponent
 
         $contactInfo = '<div class="contact-info">' .
             '<a href="' . $instance['data']['contact']['account']['url'] . '" target="_blank" class="text-muted">' .
-            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" alt="avatar '.$instance['data']['contact']['account']['display_name'].'" style="width:16px;"> ' .
+            '<img src="' . $instance['data']['contact']['account']['avatar'] . '" alt="avatar ' . $instance['data']['contact']['account']['display_name'] . '" style="width:16px;"> ' .
             $instance['data']['contact']['account']['display_name'] .
             '</a>' .
             '</div>';
@@ -77,13 +81,13 @@ class MainHelper extends HelperComponent
             'href="https://' . $instance['name'] . '/api/v1/trends/statuses">' .
             '<i class="fas fa-file-alt"></i>' .
             '</a>' .
-            '</small></div>'           ;
+            '</small></div>';
 
         if ($instance['name'] !== 'mastodon.social') {
             $extendedHtml .= '<hr><div class="text-muted"><small><small><strong>' . $instance['name'] . '</strong> ' .
                 'ist Teil des dezentralen sozialen Netzwerks, das von ' .
                 '<a href="https://joinmastodon.org" target="_blank">Mastodon</a> betrieben wird. ' .
-                '<a href="/mastodon/?action=renewInstance&instance=' . $instance['name'] . '">' .
+                '<a href="/mastodon/renewInstance/' . $instance['name'] . '">' .
                 '<sup><i class="text-muted fas fa-sync fa-fw"></i></sup></a>' .
                 '</small></small></div>';
         }
@@ -138,7 +142,7 @@ class MainHelper extends HelperComponent
                 $htmlContent .= '<div class="alert alert-danger">' .
                     '<strong>' . $instanceName . '</strong> skipped<br/>' .
                     'no data received from this instance<br/>' .
-                    '<a href="/mastodon/?action=renewInstance&instance=' . $instance . '"><i class="fas fa-sync fa-fw"></i> retry</a>' .
+                    '<a href="/mastodon/renewInstance/' . $instance . '"><i class="fas fa-sync fa-fw"></i> retry</a>' .
                     '</div>';
             }
 
@@ -155,8 +159,8 @@ class MainHelper extends HelperComponent
         $htmlContent = '';
         $instanceStats = $this->getStatsCollection($reset);
 
-        $htmlContent .= '<li><a '.($routingData['viewport'] === 'main' ?'class="text-danger"':'') .' href="/mastodon/">Trends</a></li>';
-        $htmlContent .= '<li><a '.($routingData['viewport'] === 'timelines' ?'class="text-danger"':'') .' href="/mastodon/timelines" >Timelines</a></li>';
+        $htmlContent .= '<li><a ' . ($routingData['viewport'] === 'main' ? 'class="text-danger"' : '') . ' href="/mastodon/">Trends</a></li>';
+        $htmlContent .= '<li><a ' . ($routingData['viewport'] === 'timelines' ? 'class="text-danger"' : '') . ' href="/mastodon/timelines" >Timelines</a></li>';
         $htmlContent .= '<li><hr></li>';
 
         foreach ($instanceStats as $instanceName => $instance) {
@@ -176,7 +180,8 @@ class MainHelper extends HelperComponent
     }
 
 
-    public function getOrderedTimelineCollection(bool $reset = false){
+    public function getOrderedTimelineCollection(bool $reset = false)
+    {
         if (empty($this->orderedTrendsCollection) || count($this->orderedTrendsCollection) <= 0 || $reset !== false) {
             $this->orderedTrendsCollection = [];
 
@@ -251,7 +256,8 @@ class MainHelper extends HelperComponent
     }
 
 
-    public function getTimelineCollection(bool $reset = false){
+    public function getTimelineCollection(bool $reset = false)
+    {
         if (empty($this->trendCollection) || count($this->trendCollection) <= 0 || $reset !== false) {
             $this->trendCollection = $this->instanceController->getInstanceTimeLineCollection($reset);
         }
@@ -284,8 +290,6 @@ class MainHelper extends HelperComponent
 
     public function parseTimelinePosts()
     {
-//        https://connectit.social/api/v1/timelines/public?local=true&only_media=false
-
         $htmlContent = '';
         $doubleBucket = [];
 
@@ -309,6 +313,7 @@ class MainHelper extends HelperComponent
 
         return $htmlContent;
     }
+
     /**
      * @param bool $reset
      * @return string
@@ -376,29 +381,32 @@ class MainHelper extends HelperComponent
                         '<img class="card-img-top" src="' . $previewUrl . '" alt="' . $desc . '" title="' . $desc . '">' :
                         self::getPlaceholderImage($title, '', 'card-img-top'));
 
-                    $target = (!empty($mediaItem['remote_url']) ? $mediaItem['remote_url'] : $previewUrl);
+//                    $target = (!empty($mediaItem['remote_url']) ? $mediaItem['remote_url'] : $previewUrl);
 
                     $imageCollection .= '<div class="col-sm-12 col-md-' . $colSize . '" data-type="' . $mediaItem['type'] . '">' .
-                        '<a href="' . $target . '" title="' . $desc . '" target="_blank">' .
+//                        '<a href="' . $target . '" title="' . $desc . '" target="_blank">' .
                         $image .
-                        '</a></div>';
+//                        '</a>' .
+                        '</div>';
 
                 } elseif ($mediaItem['type'] === 'video') {
 
-                    $previewUrl = (isset($mediaItem['preview_url']) && !empty($mediaItem['preview_url']) ? $mediaItem['preview_url'] : '');
+//                    $previewUrl = (isset($mediaItem['preview_url']) && !empty($mediaItem['preview_url']) ? $mediaItem['preview_url'] : '');
 
                     $image = (isset($mediaItem['preview_url']) && !empty($mediaItem['preview_url']) ?
                         '<img class="card-img-top" src="' . $mediaItem['preview_url'] . '" alt="' . $desc . '"  title="' . $desc . '">' :
                         self::getPlaceholderImage($title, '', 'card-img-top'));
 
-                    $target = (!empty($mediaItem['url']) ? $mediaItem['url'] : $previewUrl);
+//                    $target = (!empty($mediaItem['url']) ? $mediaItem['url'] : $previewUrl);
 
                     $imageCollection .= '<div class="col-sm-12 col-md-' . $colSize . '" data-type="' . $mediaItem['type'] . '">' .
-                        '<a href="' . $target . '" title="' . $desc . '" target="_blank">' .
+//                        '<a href="' . $target . '" title="' . $desc . '" target="_blank">' .
                         $image .
-                        '</a></div>';
+//                        '</a>' .
+                        '</div>';
                 } else {
-                    $imageCollection .= '<div class="col-sm-12 col-md-' . $colSize . '" data-type="' . $mediaItem['type'] . '"><svg class="bd-placeholder-img card-img-top" width="100%" height="225" ' .
+                    $imageCollection .= '<div class="col-sm-12 col-md-' . $colSize . '" data-type="' . $mediaItem['type'] . '">' .
+                        '<svg class="bd-placeholder-img card-img-top" width="100%" height="225" ' .
                         'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" ' .
                         'preserveAspectRatio="xMidYMid slice" focusable="false">' .
                         '<title></title><rect width="100%" height="100%" fill="#55595c"/>' .
@@ -423,9 +431,9 @@ class MainHelper extends HelperComponent
                 '<div class="col px-3 py-2 d-flex flex-column position-static overflow-hidden">' .
                 '<p class="text-truncate m-0" style="max-width: 100%;">' . $article['card']['title'] . '</p>' .
                 '<small class="text-truncate m-0 mb-2" style="max-width: 100%;">' . $article['card']['description'] . '</small>' .
-                '<a href="' . $article['card']['url'] . '" class="stretched-link" target="_blank">' .
+//                '<a href="' . $article['card']['url'] . '" class="stretched-link" target="_blank">' .
                 '<small class="text-muted">' . $urlRoot[2] . '</small>' .
-                '</a>' .
+//                '</a>' .
                 '</div>' .
                 '</div>' .
                 '</div>';
@@ -443,29 +451,31 @@ class MainHelper extends HelperComponent
             '<div class="reblogs_count mx-2 ' . ($article['reblogs_count'] <= 0 ? 'text-muted' : '') . '">' .
             '<i class="fas fa-retweet fa-fw"></i> ' . $article['reblogs_count'] . '</div> ' .
             '<div class="replies_count mx-2 ' . ($article['replies_count'] <= 0 ? 'text-muted' : '') . '">' .
-            '<i class="fas fa-reply fa-fw"></i> ' . $article['replies_count'] . '</div> ' .
-
+            '<a class="btn-collapse-replies" data-bs-toggle="collapse" href="#rc_' . $article['id'] . '" role="button" ' .
+            'aria-expanded="false" aria-controls="multiCollapseExample1">' .
+            '<i class="fas fa-reply fa-fw"></i> ' . $article['replies_count'] .
+            '</a>' .
+            '</div> ' .
             '</div>' .
-            '<a title="Original Post aufrufen" href="' . $article['url'] . '" ' .
-            'target="_blank" >View <i class="fa fa-external-link-alt"></i></a>' .
+
             (!empty(CURRENT_USER) ?
                 '<div class="btn-group">' .
-                '<a href="' . $article['url'] . '" ' .
+                '<a href="https://' . $article['instance_name'] . '/api/v1/statuses/' . $article['id'] . '/context" ' .
                 'target="_blank" type="button" class="btn btn-sm btn-outline-secondary">View</a>' .
-                '<a href="/mastodon/?id=' . $article['id'] . '&instance=' . $article['instance_name'] . '" ' .
-                'target="_blank" type="button" class="btn btn-sm btn-outline-secondary">raw</a>' .
+                '<a href="/mastodon/raw/' . $article['id'] . '/?instance=' . $article['instance_name'] . '" ' .
+                'target="_blank" type="button" class="btn btn-sm btn-outline-secondary">Api-Call</a>' .
                 '</div>'
                 : '') .
 
 
             '</div>';
 
-        $more = '';
+        $more = '<div class="collapse multi-collapse" id="rc_' . $article['id'] . '" ' .
+            'data-status-id="' . $article['id'] . '" data-instance="' . $article['instance_name'] . '" data-replies-count="' . $article['replies_count'] . '"></div>';
 
-        $userRow = '' .
-            '<div class="d-flex p-3"  title="' . $article['account']['username'] . '">' .
+        $userRow = '<div class="d-flex p-3"  title="' . $article['account']['username'] . '">' .
             $this->parseUserCard($article['account']) .
-            '<div class="text-muted text-end  position-relative">' .
+            '<div class="text-muted text-end position-relative">' .
             '<a class="text-muted" title="' . $article['instance_name'] . '" ' .
             'href="https://' . $article['instance_name'] . '" target="_blank" ' .
             'title="' . $article['instance_name'] . '" class="stretched-link">' .
@@ -476,14 +486,17 @@ class MainHelper extends HelperComponent
             '</small>' .
 
             '</div>' .
-            '</div>' .
-            '';
+            '</div>';
 
 
         return '<div class="card shadow-sm mb-4">' .
             $userRow .
             '<div class="card-body">' .
+            '<div class="position-relative">' .
             $cardContent .
+            '<a title="Originalbeitrag anschauen" class="stretched-link" href="' . $article['url'] . '" ' .
+            'target="_blank" >&nbsp;</a>' .
+            '</div>' .
             '<hr>' .
             $actionBar .
             $more .

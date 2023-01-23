@@ -2,12 +2,9 @@
 
 use DecodoMastodonService\Controller\Document\Document;
 
-global $routingData;
-
 $document = new Document();
-$document->title = $_ENV['APP_NAME'];
-$document->topNavigation = '';
-$document->start();
+$document->setTopNavigation('')
+    ->start($_ENV['APP_NAME'] . ' Imprint');
 ?>
     <div class="container">
     <div class="card card-body">

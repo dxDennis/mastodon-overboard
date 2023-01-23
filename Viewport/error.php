@@ -4,9 +4,10 @@ use DecodoMastodonService\Controller\Document\Document;
 global $routingData;
 
 $document = new Document();
-$document->title = $_ENV['APP_NAME'];
-$document->topNavigation = '';
-$document->start();
+$document->addJs('/mastodon/assets/js/main.js')
+    ->setTopNavigation('')
+    ->start($_ENV['APP_NAME']);
+
 ?>
     <div class="container">
     <div class="card card-body">

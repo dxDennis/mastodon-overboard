@@ -5,11 +5,11 @@ use DecodoMastodonService\Controller\Document\Document;
 
 $helper = new MainHelper();
 $document = new Document();
-$document->title = 'What`s Mastogoing';
-$document->topNavigation = $helper->parseInstanceLinks();
-$document->start();
-?>
-    <div class="container">
+$document->addJs('/mastodon/assets/js/main.js')
+    ->setTopNavigation($helper->parseInstanceLinks())
+    ->start($_ENV['APP_NAME']);
+
+?><div class="container">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
             <div class="col-12 col-md-3 server-instance-col">
                 <div class="list-group server-cards">
@@ -36,20 +36,5 @@ $document->start();
                 }
                 ?></div>
         </div>
-    </div>
-    <script>
-        $(() => {
-            $('.instance-server-visibility').prop('checked', true).change((a) => {
-                $('[data-card-instance="' + $(a.currentTarget).data('instanceName') + '"]').toggle();
-            })
-
-            $('.server-card').each((i, a) => {
-                let me = $(a)
-                let _id = me.prop('id')
-                _id = _id.replace('server-instance-', '')
-                $('[data-instance-count="' + _id + '"]').text($('[data-card-instance="' + _id + '"]').length + ' Posts')
-
-            })
-        })
-    </script><?php
+    </div><?php
 $document->send();

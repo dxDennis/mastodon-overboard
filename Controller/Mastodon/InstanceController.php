@@ -206,4 +206,42 @@ class InstanceController
         return json_decode($cacheCallResponse, 1);
     }
 
+    public function getCachedStatusContext(string $statusId,string $instance,bool $reset = false,$expirationTime='15 minutes')
+    {
+        $cacheModel = new CacheModel();
+        $cacheKey = __METHOD__ . '_' . $instance.'_'.$statusId;
+        $cacheItem = $cacheModel->get($cacheKey);
+
+        LogController::getLogger()->info('IP:' . $_SERVER['REMOTE_ADDR'] .
+            ' isHit: '.$cacheItem->isHit().
+            ' reset: '.$reset.
+            ' expirationTime: '.$expirationTime.
+            ' CacheKey:' . $cacheKey, [__FILE__ . ' ' . __LINE__]);
+
+        if (!$cacheItem->isHit() || $reset !== false) {
+            $results = $this->getStatusContext($statusId,$instance);
+            if (!$results === false) {
+                $cacheItem = $cacheModel->write($results, CacheModel::toDate($expirationTime));
+            }
+        } else {
+            LogController::getLogger()->info('IP:' . $_SERVER['REMOTE_ADDR'] .
+                ' From Cache: '.$cacheItem->getExpirationDate()->format('Y-m-d H:i:s'), [__FILE__ . ' ' . __LINE__]);
+        }
+
+        $results['expires_at'] = $cacheItem->getExpirationDate()->format('Y-m-d H:i:s');
+        $results['expiration_time'] = $expirationTime;
+        $results['cache_key'] = $cacheKey;
+        $results['data'] = $cacheItem->get();
+        $results['count'] = (isset($results['data']) && is_array($results['data']) ?  count($results['data']):0);
+        return $results;
+    }
+
+    public function getStatusContext($statusId,$instance){
+        $apiController = new ApiController();
+        $cacheCallResponse = $apiController->call('https://'.$instance . '/api/v1/statuses/'.$statusId.'/context');
+        if (!$cacheCallResponse) {
+            return false;
+        }
+        return json_decode($cacheCallResponse, 1);
+    }
 }

@@ -2,10 +2,14 @@
 
 namespace DecodoMastodonService\Controller\Document;
 
+use JetBrains\PhpStorm\NoReturn;
+
 class Document
 {
     public string $content = '';
     public string $title = '';
+    public string $css = '';
+    public string $js = '';
     public string $topNavigation = '';
     public static string $templateFile = '';
 
@@ -28,11 +32,27 @@ class Document
                 </div>';
     }
 
-    /**
-     * @return Document
-     */
-    public function start(): Document
+    public static function toJson(string $data, $encode = false)
     {
+        $JSON = ($encode ? json_encode($data) : $data);
+        if (!$JSON) {
+            die('<pre>' . print_r(['JSON_RESULT_ERROR', 'DATA' => $data, 'JSON' => $JSON], 1) . __FILE__ . ' ' . __LINE__ . '</pre>');
+        }
+
+        @ob_end_clean();
+        header('Content-type: application/json');
+        die($JSON);
+    }
+
+    /**
+     * @param $title
+     * @return $this
+     */
+    public function start($title = NULL): Document
+    {
+        if (!empty($title)) {
+            $this->title = $title;
+        }
         ob_start();
         return $this;
     }
@@ -57,6 +77,46 @@ class Document
             self::$templateFile = TEMPLATE_DIRECTORY . (!empty($_ENV['TEMPLATE']) ? $_ENV['TEMPLATE'] : 'template.php');
         }
         return self::$templateFile;
+    }
+
+    /**
+     * @param string $title
+     * @return Document
+     */
+    public function setTitle(string $title): Document
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    /**
+     * @param string $parseInstanceLinks
+     * @return Document
+     */
+    public function setTopNavigation(string $parseInstanceLinks): Document
+    {
+        $this->topNavigation = $parseInstanceLinks;
+        return $this;
+    }
+
+    /**
+     * @param string $string
+     * @return Document
+     */
+    public function addJs(string $string)
+    {
+        $this->js .= '<script src="' . $string . '"></script>'."\n";
+        return $this;
+    }
+
+    /**
+     * @param string $string
+     * @return Document
+     */
+    public function addCss(string $string)
+    {
+        $this->css .= '<link href="' . $string . '" rel="stylesheet">';
+        return $this;
     }
 
 }

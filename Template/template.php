@@ -4,6 +4,7 @@
  */
 
 use DecodoMastodonService\Controller\Document\Document;
+
 global $document;
 ?>
 <!doctype html>
@@ -27,12 +28,12 @@ global $document;
     <link href="/mastodon/vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/mastodon/vendor/fortawesome/font-awesome/css/all.min.css" rel="stylesheet">
     <link href="/mastodon/assets/css/style.css" rel="stylesheet">
+    <?php echo $document->css; ?>
     <link rel="apple-touch-icon" href="/mastodon/assets/img/logo-symbol-icon.svg" sizes="180x180" type="image/svg+xml">
     <link rel="icon" href="/mastodon/assets/img/logo-symbol-icon.svg" sizes="32x32" type="image/svg+xml">
     <link rel="icon" href="/mastodon/assets/img/logo-symbol-icon.svg" sizes="16x16" type="image/svg+xml">
     <link rel="mask-icon" href="/mastodon/assets/img/logo-symbol-icon.svg" color="#6364FF" type="image/svg+xml">
     <link rel="icon" href="/mastodon/assets/img/logo-symbol-icon.svg" type="image/svg+xml">
-    <script src="/mastodon/vendor/components/jquery/jquery.min.js"></script>
     <meta name="theme-color" content="#191b22">
 </head>
 <body>
@@ -80,5 +81,7 @@ global $document;
     </div>
 </footer>
 <script src="/mastodon/vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/mastodon/vendor/components/jquery/jquery.min.js"></script>
+<?php echo $document->js; ?>
 </body>
 </html>

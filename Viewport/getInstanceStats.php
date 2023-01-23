@@ -40,32 +40,17 @@ if (isset($instances[$requestInstance])) {
 };
 
 $document = new Document();
-$document->title = 'Instance details - ' . $requestInstance;
-$document->start();
+$document->addJs('/mastodon/assets/js/main.js')
+    ->addCss('/mastodon/assets/css/instance_stats.js')
+    ->setTopNavigation('')
+    ->start($_ENV['APP_NAME'].' Instance details - ' . $requestInstance);
+
 ?>
-    <style>
-        .banner-info-box {
-            position: absolute;
-            bottom: 0px;
-            width: 100%;
-            box-shadow: 0 -159px 76px rgba(0, 0, 0, 0.8) inset;
-            color: #fff;
-            text-shadow: 0 2px 1px rgba(0, 0, 0, 0.8);
-        }
-
-        .banner-info-box .card-content {
-
-            color: #fff;
-        }
-    </style>
     <div class="container">
         <?php echo $content; ?>
-
-
     </div>
 <?php
 if (!empty(CURRENT_USER)) {
     echo Document::debugModal($instance);
 }
-
 $document->send();
